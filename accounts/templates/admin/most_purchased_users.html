@@ -1,0 +1,43 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Top Movie Purchaser | Django Site Admin{% endblock %}
+
+{% block content %}
+<h1>Top Movie Purchaser</h1>
+
+{% if top_user %}
+<div style="margin-bottom: 30px; padding: 15px; border: 1px solid #ddd;">
+    <h2>{{ top_user.username }}</h2>
+    <p><strong>Email: </strong>{{ top_user.email }}</p>
+    <p><strong>Total Movies: </strong>{{ top_user.movies_count }}</p>
+</div>
+
+<h3>Purchase History</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Order ID</th>
+            <th>Movie</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for Order in orders %}
+        {% for item in Order.item_set.all %}
+        <tr>
+            <td>{{ Order.id }}</td>
+            <td>{{ item.movie.name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.price }}</td>
+            <td>{{ Order.date|date:"M d, Y" }}</td>
+        </tr>
+        {% endfor %}
+        {% endfor %}
+    </tbody>
+</table>
+
+{% else %}
+<p>No Users Found</p>
+{% endif %}
+{% endblock %}
