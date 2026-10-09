@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Movie, Review
+from .models import Movie, Review, Rating
 from django.contrib.auth.decorators import login_required
+from django.db.models import Avg, Count
 
 # Create your views here.
 def index(request):
@@ -17,14 +18,25 @@ def index(request):
                   {'template_data': template_data})
 
 def show(request, id):
-    movie =  Movie.objects.get(id=id)
+    movie = Movie.objects.get(id=id)
     reviews = Review.objects.filter(movie=movie)
+    stats = movie.ratings.aggregate(avg=Avg('stars'), count=Count('id'))
+
+    user_stars = 0
+    if request.user.is_authenticated: 
+        rating = Rating.objects.filter(movie=movie, user=request.user).first()
+        if rating: 
+            user_stars = rating.stars 
+
     template_data = {}
-    template_data['title'] = movie.name
-    template_data['movie'] = movie
-    template_data['reviews'] = reviews
-    return render(request, 'movies/show.html',
-                  {'template_data': template_data})
+    template_data['title'] = movie.name 
+    template_data['movie'] = movie 
+    template_data['reviews'] = reviews 
+    template_data['avg_rating'] = stats['avg']
+    template_data['rating_count'] = stats['count']
+    template_data['user_stars'] = user_stars 
+    template_data['star_range'] = range(1,6)
+    return render(request, 'movies/show.html', {'template_data': template_data})
 
 
 @login_required
@@ -71,4 +83,26 @@ def delete_review(request, id, review_id):
 def report_review(request, id, review_id):
     review = get_object_or_404(Review, id=review_id)
     review.delete()
+    return redirect('movies.show', id=id)
+
+@login_required
+def rate_movie(request, id): 
+    if request.method == 'POST':
+        movie = get_object_or_404(Movie, id=id)
+        try: 
+            stars = int(request.POST.get('stars', 0))
+        except ValueError: 
+            stars = 0 
+
+        if 1 <= stars <= 5: 
+            Rating.objects.update_or_create(
+                movie=movie, user=request.user, 
+                defaults={'stars': stars})
+
+    return redirect('movies.show', id=id)
+
+@login_required
+def remove_rating(request, id):
+    if request.method == 'POST': 
+        Rating.objects.filter(movie_id = id, user = request.user).delete()
     return redirect('movies.show', id=id)

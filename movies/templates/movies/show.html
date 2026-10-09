@@ -9,6 +9,40 @@
         <hr />
         <h6><b>Description:</b> {{ template_data.movie.description }}</h6>
         <h6><b>Price:</b> ${{ template_data.movie.price }}</h6>
+        <h6><b>Rating:</b>
+          {% if template_data.rating_count %}
+            ★ {{ template_data.avg_rating|floatformat:1 }} / 5
+            ({{ template_data.rating_count }} rating{{ template_data.rating_count|pluralize }})
+          {% else %}
+            No ratings yet 
+          {% endif %}
+        </h6>
+
+        {% if user.is_authenticated %}
+        <div class="mb-3">
+          <form method="post" class="d-inline"
+            action="{% url 'movies.rate' id=template_data.movie.id %}">
+            {% csrf_token %}
+            <span>Your rating:</span>
+            {% for n in template_data.star_range %}
+            <button type="submit" name="stars" value="{{ n}}"
+              class="btn btn-link p-0 text-warning text-decoration-none fs-4">
+              {% if n <= template_data.user_stars %} ★ {% else %} ☆ {% endif %}
+            </button>
+            {% endfor %}
+          </form>
+          {% if template_data.user_stars %}
+          <form method="post" class="d-inline ms-2" 
+            action="{% url 'movies.remove_rating' id=template_data.movie.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-danger">
+              Remove rating
+            </button>
+          </form>
+          {% endif %}
+        </div>
+        {% endif %}
+
         <p class="card-text">
           <form method="post" action="{% url 'cart.add' id=template_data.movie.id %}">
             <div class="row">
