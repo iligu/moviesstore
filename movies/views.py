@@ -1,7 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Movie, Review, Rating
 from django.contrib.auth.decorators import login_required
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, Sum
+from cart.models import Item
+from cart.regions import REGIONS
 
 # Create your views here.
 def index(request):
@@ -106,3 +108,17 @@ def remove_rating(request, id):
     if request.method == 'POST': 
         Rating.objects.filter(movie_id = id, user = request.user).delete()
     return redirect('movies.show', id=id)
+def popularity_map(request):
+    region = request.GET.get('region')
+    if region not in REGIONS:
+        region = 'northeast'
+    top_movies = (Item.objects.filter(order__region=region)
+                  .values('movie__name')
+                  .annotate(count=Sum('quantity'))
+                  .order_by('-count')[:10])
+    template_data = {}
+    template_data['title'] = 'Popularity Map'
+    template_data['region'] = region
+    template_data['top_movies'] = top_movies
+    return render(request, 'movies/popularity_map.html',
+                  {'template_data': template_data})

@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from movies.models import Movie
 from .models import Order, Item
+from .regions import REGIONS, REGION_CHOICES
 from django.contrib.auth.decorators import login_required
 from .utils import calculate_cart_total
 
@@ -25,6 +26,7 @@ def index(request):
     template_data['title'] = 'Cart'
     template_data['movies_in_cart'] = movies_in_cart
     template_data['cart_total'] = cart_total
+    template_data['regions'] = REGION_CHOICES
     return render(request, 'cart/index.html', {'template_data': template_data})
 
 def add_to_cart(request, id):
@@ -48,6 +50,10 @@ def purchase(request):
     order = Order()
     order.user = request.user
     order.total = cart_total
+    region = request.POST.get('region')
+    if region not in REGIONS:
+        region = 'northeast' 
+    order.region = region
     order.save()
     for movie in movies_in_cart:
         item = Item()

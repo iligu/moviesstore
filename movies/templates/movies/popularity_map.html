@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+  crossorigin="" />
+<div class="p-3">
+  <div class="container">
+    <div class="row mt-3">
+      <div class="col-md-6 mx-auto mb-3">
+        <h2>Local Popularity Map</h2>
+        <p>Click a region to see what's trending!</p>
+        <div id="map" style="height: 300px;"></div>
+      </div>
+      <div class="col-md-6 mx-auto mb-3">
+        <h2>Trending in {{ template_data.region|title }}</h2>
+        <ol>
+          {% for movie in template_data.top_movies %}
+            <li>{{ movie.movie__name }} ({{ movie.count }} sold)</li>
+          {% empty %}
+            <li>No purchases in this region.</li>
+          {% endfor %}
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin=""></script>
+<script>
+  const map = L.map('map').setView([39.5, -98.35], 4);
+
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }).addTo(map);
+
+  const regionShapes = {
+    west: [
+      [49,-124.5],[49,-104],[31.3,-104],[32.5,-117],[40,-124.3]
+    ],
+    midwest: [
+      [49,-104],[49,-89],[42,-80.5],[39.7,-80.5],[37,-104]
+    ],
+    south: [
+      [39.7,-80.5],[39,-74.8],[25,-80.3],[26,-97.2],[31.3,-104],[37,-104]
+    ],
+    northeast: [
+      [42,-80.5],[45,-74.5],[47.4,-68.5],[44.5,-67],[39,-74.8],[39.7,-80.5]
+    ]
+  };
+
+  const regionColors = {
+    west: '#e76f51',
+    midwest: '#2a9d8f',
+    south: '#e9c46a',
+    northeast: '#264653'
+  };
+
+  for (const key in regionShapes) {
+    L.polygon(regionShapes[key], { color: regionColors[key], fillOpacity: 0.4, weight: 2 })
+      .addTo(map)
+      .on('click', function () {
+        window.location.search = '?region=' + key;
+      });
+  }
+</script>
+{% endblock content %}
